@@ -1,6 +1,6 @@
 
 
-##### Robot Arm Torque Calculator #####
+# Robot Arm Torque Calculator #
 
 
 ## about ##
