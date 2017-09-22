@@ -1,16 +1,14 @@
 // 
 //
-// ##### Robot Arm Torque Calculator #####
+// # Robot Arm Torque Calculator #
 // 
-//
-// ## about ##
 //
 // This app draws a 6DOF serial manipulator robot arm in 2D and calculates the linear and torque forces on each joint.
 // The robot's mass and dimensions are set in the robotArm constructor. 
 //
 // Written 2017-09-05 in Processsing 3.3.5 by Dan Royer (dan@marginallyclever.com) 
 //
-// Default unit of measurement is meters, kilograms, celcius, radians.
+// Default unit of measurement is centimeters, kilograms, celcius, radians.
 // 
 //
 // ## controls ##
@@ -36,7 +34,7 @@
 // 
 
 
-final static float SCALE   = 400;      // for rendering
+final static float SCALE   = 4;      // for rendering
 final static float GRAVITY = -9.80665; // m/s/s
 
 
@@ -56,14 +54,21 @@ void setup() {
 
 void draw() {
   animate();
+
+  drawBackground();
   
+  arm.draw();
+  clock.draw();
+}
+
+
+void drawBackground() {
   // erase everything
   background(127,127,127);
+  // dark portion at bottom of view
   fill(64,64,64);
   noStroke();
   rect(0,height-216,width,height);
-  arm.draw();
-  clock.draw();
 }
 
 
@@ -95,7 +100,7 @@ void keyReleased() {
     case 'e':  arm.rotateSelectedJoint(0);  break;
     case '1':  arm.drawTorques = !arm.drawTorques;  break;
     case '2':  arm.drawAngles  = !arm.drawAngles;   break;  
-    case ' ': clock.togglePaused();  break;
+    case ' ':  clock.togglePaused();  break;
     default: break;
   }
 }
@@ -103,7 +108,7 @@ void keyReleased() {
 void mousePressed() {
   Vector mouse = new Vector(mouseX,mouseY);
   arm.activeJoint = arm.findNearestJoint(mouse,JOINT_SELECTION_LIMIT);
-  //arm.rotateSelectedJointTowards(new Vector(mouseX,mouseY));
+  //arm.rotateSelectedJointTowards(mouse);
 }
 
 void mouseReleased() {
