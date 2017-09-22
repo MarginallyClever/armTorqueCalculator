@@ -3,6 +3,9 @@
 
 final static int NUM_JOINTS = 7;
 final static float JOINT_SELECTION_LIMIT = 40.0;
+final static int FONT_HEIGHT = 12;
+final static int LINE_HEIGHT = FONT_HEIGHT+2;
+final static float JOINT_DIAMETER = 12;
 
 
 enum RotationType {
@@ -22,6 +25,7 @@ class RobotJoint {
   Vector       cumulativeX, cumulativeY;
   Vector       force;
   float        torque;
+  float        maxTorque;
   RotationType rotationType;
   float        turnSpeed;
   
@@ -55,13 +59,54 @@ class RobotArm {
       joints[i].angleRel=0;
     }
     
-    joints[0].posOriginalRel.set(0,0.00);  joints[0].mass=0.500;  joints[0].rotationType=RotationType.AXIAL;
-    joints[1].posOriginalRel.set(0,0.10);  joints[1].mass=0.300;  joints[1].rotationType=RotationType.PLANAR;
-    joints[2].posOriginalRel.set(0,0.25);  joints[2].mass=0.400;  joints[2].rotationType=RotationType.PLANAR;
-    joints[3].posOriginalRel.set(0,0.12);  joints[3].mass=0.200;  joints[3].rotationType=RotationType.AXIAL;
-    joints[4].posOriginalRel.set(0,0.12);  joints[4].mass=0.100;  joints[4].rotationType=RotationType.PLANAR;
-    joints[5].posOriginalRel.set(0,0.00);  joints[5].mass=0.500;  joints[5].rotationType=RotationType.AXIAL;
-    joints[6].posOriginalRel.set(0,0.10);  joints[6].mass=2.000;  joints[6].rotationType=RotationType.NONE;
+    // j0 - shoulder
+    // 1x 47:1 NEMA23 motor, 2300g ea     https://www.omc-stepperonline.com/geared-stepper-motor/nema-23-stepper-motor-bipolar-l76mm-w-gear-raio-471-planetary-gearbox-23hs30-2804s-pg47.html?mfp=57-motor-nema-size%5BNema%2023%5D
+    // 2x 70-110-20 bearing, 576.0623g ea http://www.vxb.com/6014-2RS1-Bore-Dia-70mm-OD-110mm-Width-20mm-p/6014-2rs1.htm
+    joints[0].posOriginalRel.set(0, 0);
+    joints[0].mass=4.235;
+    joints[0].rotationType=RotationType.AXIAL;
+    joints[0].maxTorque = 4000;  //Ncm
+    // j1 - bicep
+    // same motor as j1    
+    // 2x 60-78-10 bearing , 81.64663g ea http://www.vxb.com/61812-2RZ-Bore-Dia-60mm-OD-78mm-Width-10mm-p/61812-2rz.htm
+    joints[1].posOriginalRel.set(0,10);
+    joints[1].mass=4.442;
+    joints[1].rotationType=RotationType.PLANAR;
+    joints[1].maxTorque = 4000;
+    // j2 - elbow
+    // 1x 15:1 NEMA17 motor, 680g ea        https://www.omc-stepperonline.com/geared-stepper-motor/nema-17-stepper-motor-l39mm-gear-raio-151-high-precision-planetary-gearbox-17hs15-1684s-hg15.html
+    // 2x 45-58-7 bearing  ,  40.82331g ea  https://www.vxb.com/61809-2RZ-Double-Bore-Dia-45mm-OD-58mm-Width-7mm-p/61809-2rz.htm 
+    joints[2].posOriginalRel.set(0,25);
+    joints[2].mass=0.184 + 2.553;
+    joints[2].rotationType=RotationType.PLANAR;
+    joints[2].maxTorque = 3500;
+    // j3 - roll wrist
+    // 1x 15:1 NEMA17 motor, 680g ea        https://www.omc-stepperonline.com/geared-stepper-motor/nema-17-stepper-motor-l39mm-gear-raio-151-high-precision-planetary-gearbox-17hs15-1684s-hg15.html
+    // 2x 45-58-7 bearing  ,  40.82331g ea  https://www.vxb.com/61809-2RZ-Double-Bore-Dia-45mm-OD-58mm-Width-7mm-p/61809-2rz.htm 
+    joints[3].posOriginalRel.set(0,10);
+    joints[3].mass=1.106;
+    joints[3].rotationType=RotationType.AXIAL;
+    joints[3].maxTorque = 3500;
+    // j4 - tilt wrist
+    // 1x 15:1 NEMA14 motor, 320g ea        https://www.omc-stepperonline.com/geared-stepper-motor/nema-14-stepper-motor-bipolar-l33mm-w-gear-raio-191-planetary-gearbox-14hs13-0804s-pg19.html
+    joints[4].posOriginalRel.set(0,10);
+    joints[4].mass=0.338;
+    joints[4].rotationType=RotationType.PLANAR;
+    joints[4].maxTorque = 3000;
+    // j5 - roll hand
+    // 1x 90:1 NEMA8  motor, 130g ea        https://www.omc-stepperonline.com/geared-stepper-motor/nema-8-stepper-motor-bipolar-l38mm-w-gear-raio-901-planetary-gearbox-8hs15-0604s-pg90.html?mfp=57-motor-nema-size%5BNema%208%5D
+    joints[5].posOriginalRel.set(0, 5);
+    joints[5].mass=0.059;
+    joints[5].rotationType=RotationType.AXIAL;
+    joints[4].maxTorque = 900;
+    // j6 - tool
+    // max mass 2kg
+    joints[6].posOriginalRel.set(0, 5);
+    joints[6].mass=2.000;
+    joints[6].rotationType=RotationType.NONE;
+    
+    // set initial position
+    joints[1].angleRel=PI/2;
   }
 
   
@@ -111,25 +156,37 @@ class RobotArm {
         fill(255,255,0);
       }
       noStroke();
-      rect(this.joints[i].posAbs.x*SCALE-2,
-           this.joints[i].posAbs.y*SCALE-2,
-           4,
-           4);
+      ellipse(this.joints[i].posAbs.x*SCALE,
+              this.joints[i].posAbs.y*SCALE,
+              JOINT_DIAMETER,
+              JOINT_DIAMETER);
+        stroke(0,255,0);
+        ellipse(this.joints[i].posAbs.x*SCALE,
+                this.joints[i].posAbs.y*SCALE,
+                JOINT_DIAMETER,
+                JOINT_DIAMETER);
+        stroke(255,0,0);
+        arc(this.joints[i].posAbs.x*SCALE,
+            this.joints[i].posAbs.y*SCALE,
+            JOINT_DIAMETER,
+            JOINT_DIAMETER,
+            0,
+            2 * PI * this.joints[i].torque / this.joints[i].maxTorque );
     }
     if(activeJoint==-1) {
       int highlightJoint = this.findNearestJoint(new Vector(mouseX,mouseY),JOINT_SELECTION_LIMIT);
       if(highlightJoint!=-1) {
         stroke(255,128,0);
         noFill();
-        rect(this.joints[highlightJoint].posAbs.x*SCALE-4,
-             this.joints[highlightJoint].posAbs.y*SCALE-4,
-             8,
-             8);
+        ellipse(this.joints[highlightJoint].posAbs.x*SCALE,
+                this.joints[highlightJoint].posAbs.y*SCALE,
+                JOINT_DIAMETER,
+                JOINT_DIAMETER);
       }
     }
   
     // force
-    stroke(0,255,0);
+    stroke(255,255,0);
     noFill();
     for(i=0;i<NUM_JOINTS;++i) {
       line(this.joints[i].posAbs.x*SCALE,
@@ -148,25 +205,28 @@ class RobotArm {
     
   
     // torque
-    int fontSize = 12;
-    int lineHeight = fontSize+2; 
-    fill(255,255,255);
     noStroke();
-    textSize(fontSize);
+    textSize(FONT_HEIGHT);
     for(i=0;i<NUM_JOINTS;++i) {
-      int x=0,y=height-lineHeight*((i+1)*2+0);
-      String torque = i+" T="+this.joints[i].torque;
+      int x=0,y=height-LINE_HEIGHT*((i+1)*2+0);
+      String jointName = " "+i; 
+      String torque = this.joints[i].torque+"Ncm";
+      String maxTorque = "/ "+ this.joints[i].maxTorque+"Ncm";
       String angle = "θ="+degrees(this.joints[i].angleRel);
       String mass = this.joints[i].mass+"kg";
+      String len = vectorLength(this.joints[i].posOriginalRel)+"cm";
       String rtName = this.joints[i].rotationType==RotationType.PLANAR?"PLANAR":"AXIAL";
-      fill(255,255,255);  text(torque , x, y);  x+=100;
-      fill(255,255,127);  text(angle  , x, y);  x+=100;
-      fill(255,255,255);  text(mass   , x, y);  x+=100;
-      fill(255,255,255);  text(rtName , x, y);  x+=100;
+      fill(255,255,255);  text(jointName, x, y);  x+=24;
+      fill(255,255,255);  text(rtName   , x, y);  x+=70;
+      fill(255,255,255);  text(mass     , x, y);  x+=60;
+      fill(255,255,255);  text(len      , x, y);  x+=60;
+      fill(255,255,127);  text(angle    , x, y);  x+=100;
+      fill(255,0,0);      text(torque   , x, y);  x+=100;
+      fill(0,255,0);      text(maxTorque, x, y);  x+=100;
 
       if(drawTorques) {
         fill(255,255,255);
-        text(i+"T="+this.joints[i].torque,
+        text(this.joints[i].torque+"Ncm",
              this.joints[i].posAbs.x*SCALE,
              this.joints[i].posAbs.y*SCALE);
       }
@@ -174,7 +234,7 @@ class RobotArm {
         fill(255,255,127);
         text(i+"θ="+degrees(this.joints[i].angleRel),
              this.joints[i].posAbs.x*SCALE,
-             this.joints[i].posAbs.y*SCALE-lineHeight);
+             this.joints[i].posAbs.y*SCALE-LINE_HEIGHT);
       }
     }
   }
