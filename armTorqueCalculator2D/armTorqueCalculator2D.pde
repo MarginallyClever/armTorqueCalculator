@@ -8,7 +8,9 @@
 //
 // Written 2017-09-05 in Processsing 3.3.5 by Dan Royer (dan@marginallyclever.com) 
 //
-// Default unit of measurement is centimeters, kilograms, celcius, radians.
+// last updated 2017-10-27 to match Study 5 weight and dimensions.
+//
+// Default unit of measurement are centimeters, kilograms, celcius, and radians.
 // 
 //
 // ## controls ##
@@ -36,7 +38,7 @@
 
 final static float SCALE   = 4;      // for rendering
 final static float GRAVITY = -9.80665; // m/s/s
-
+static float BOTTOM;
 
 RobotArm   arm;
 Clock      clock;
@@ -53,6 +55,8 @@ void setup() {
 
 
 void draw() {
+  BOTTOM = height-216;
+  
   animate();
 
   drawBackground();
@@ -106,7 +110,7 @@ void keyReleased() {
 }
 
 void mousePressed() {
-  Vector mouse = new Vector(mouseX,mouseY);
+  Vector mouse = new Vector(mouseX,BOTTOM-mouseY);
   arm.activeJoint = arm.findNearestJoint(mouse,JOINT_SELECTION_LIMIT);
   //arm.rotateSelectedJointTowards(mouse);
 }
